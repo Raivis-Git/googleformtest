@@ -1,8 +1,6 @@
 package google;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebElement;
 import org.testng.Assert;
 import org.testng.Reporter;
 import org.testng.annotations.AfterClass;
@@ -15,8 +13,8 @@ public class GoogleFormTest extends GoogleFormTestUtil {
     @BeforeClass
     public void setUpClass() {
         // Specify the exact Chrome version you're using
-        Reporter.log("We used Google Chrome Ver 129.0.6668.101 for this test");
-        WebDriverManager.chromedriver().browserVersion("129.0.6668.101").setup();
+        Reporter.log("We used Google Chrome Ver 129.0.6668.100 for this test");
+        WebDriverManager.chromedriver().browserVersion("129.0.6668.100").setup();
     }
 
     @BeforeMethod
@@ -31,26 +29,23 @@ public class GoogleFormTest extends GoogleFormTestUtil {
     }
 
     @Test
-    public void testValidAllFieldsFilled() {
-        chooseRadioButton(radioXPath, 3);
-        logStep("Radio button is set to 3rd option");
+    public void testAllFieldsFilledWithValidData() {
+        selectRadioButtonByIndex(2);
         setRequiredFields("Name", "example@email.com", "address");
-        inputDataIntoInputField(phoneNumberXPath, "1234567890");
-        logStep("Phone number is set to: 1234567890");
-        inputDataIntoTextArea(commentsXPath, "sample text");
-        logStep("Comments are set to: sample text");
+        enterPhoneNumber("1234567890");
+        enterComments("sample text");
         clickSubmitButton();
 
-        Assert.assertTrue(isSuccessful(), "Form submission should be successful with all fields filled");
+        Assert.assertTrue(isSuccessfulSubmitFieldDisplayed(), "Form submission should be successful with all fields filled");
         logStep("Form submission was successful");
     }
 
     @Test
-    public void testValidOnlyRequiredFieldsFilled() {
+    public void testOnlyRequiredFieldsFilled() {
         setRequiredFields("Name", "example@email.com", "address");
         clickSubmitButton();
 
-        Assert.assertTrue(isSuccessful(), "Form submission should be successful with required fields filled");
+        Assert.assertTrue(isSuccessfulSubmitFieldDisplayed(), "Form submission should be successful with required fields filled");
         logStep("Form submission was successful");
     }
 
@@ -58,13 +53,13 @@ public class GoogleFormTest extends GoogleFormTestUtil {
     public void testInvalidEmptyFields() {
         clickSubmitButton();
 
-        Assert.assertFalse(isSuccessful(), "Form submission should not be successful with empty fields");
+        Assert.assertFalse(isSuccessfulSubmitFieldDisplayed(), "Form submission should not be successful with empty fields");
         logStep("Form submission failed because required fields are empty");
-        Assert.assertNotNull(getElementIfExists(By.xpath(nameXPath + alertXPath)).orElse(null),
+        Assert.assertTrue(isNameErrorDisplayed(),
                 "Name should show an error message if submitted empty");
-        Assert.assertNotNull(getElementIfExists(By.xpath(emailXPath + alertXPath)).orElse(null),
+        Assert.assertTrue(isEmailErrorDisplayed(),
                 "Email should show an error message if submitted empty");
-        Assert.assertNotNull(getElementIfExists(By.xpath(addressXPath + alertXPath)).orElse(null),
+        Assert.assertTrue(isAddressErrorDisplayed(),
                 "Address should show an error message if submitted empty");
         logStep("Required fields showed an error");
     }
@@ -72,12 +67,10 @@ public class GoogleFormTest extends GoogleFormTestUtil {
     @Test
     public void testInvalidPhoneNumberField() {
         setRequiredFields("Name", "example@email.com", "address");
-        inputDataIntoInputField(phoneNumberXPath, "phone");
-        logStep("Phone number is set to: phone");
+        enterPhoneNumber("phone");
         clickSubmitButton();
 
-        logStep("Check if phone number shows an error");
-        Assert.assertNotNull(getElementIfExists(By.xpath(phoneNumberXPath + alertXPath)).orElse(null),
+        Assert.assertTrue(isPhoneNumberErrorDisplayed(),
                 "Phone number must be a number");
         logStep("Phone number field showed an error");
     }
@@ -85,56 +78,138 @@ public class GoogleFormTest extends GoogleFormTestUtil {
     @Test
     public void testInvalidEmailField() {
         setRequiredFields("Name", "email123", "address");
-        clickSubmitButton();
 
-        Assert.assertNotNull(getElementIfExists(By.xpath(phoneNumberXPath + alertXPath)).orElse(null),
+        clickSubmitButton();
+        Assert.assertTrue(isEmailErrorDisplayed(),
                 "Email must be in the following format 'example@example.com'");
         logStep("Email field showed an error");
     }
 
     @Test
-    public void testRadioButtonOptions() {
+    public void testRadioButtonOption1() {
         setRequiredFields("Name", "example@email.com", "address");
 
-        setRadioButtonOption(1);
-        Assert.assertNotNull(getElementIfExists(By.xpath(radioXPath + alertXPath)).orElse(null),
+        selectRadioButtonByIndex(0);
+        clickSubmitButton();
+        Assert.assertTrue(radioDisplaysError(),
                 "Radio button should only accept 3rd option");
-        logStep("An error has been shown");
+        logStep("Radio field showed an error");
+    }
 
-        setRadioButtonOption(2);
-        Assert.assertNotNull(getElementIfExists(By.xpath(radioXPath + alertXPath)).orElse(null),
+    @Test
+    public void testRadioButtonOption2() {
+        setRequiredFields("Name", "example@email.com", "address");
+
+        selectRadioButtonByIndex(1);
+        clickSubmitButton();
+        Assert.assertTrue(radioDisplaysError(),
                 "Radio button should only accept 3rd option");
-        logStep("An error has been shown");
+        logStep("Radio field showed an error");
+    }
 
-        setRadioButtonOption(4);
-        Assert.assertNotNull(getElementIfExists(By.xpath(radioXPath + alertXPath)).orElse(null),
-                "Radio button should only accept 3rd option");
-        logStep("An error has been shown");
+    @Test
+    public void testRadioButtonOption3() {
+        setRequiredFields("Name", "example@email.com", "address");
 
-        setRadioButtonOption(5);
-        Assert.assertNotNull(getElementIfExists(By.xpath(radioXPath + alertXPath)).orElse(null),
-                "Radio button should only accept 3rd option");
-        logStep("An error has been shown");
-
-        setRadioButtonOption(6);
-        Assert.assertNotNull(getElementIfExists(By.xpath(radioXPath + alertXPath)).orElse(null),
-                "Radio button should only accept 3rd option");
-        logStep("An error has been shown");
-
-        setRadioButtonOption(3);
-        Assert.assertNotNull(getElementIfExists(By.xpath(radioXPath + alertXPath)).orElse(null),
+        selectRadioButtonByIndex(2);
+        clickSubmitButton();
+        Assert.assertFalse(radioDisplaysError(),
                 "Radio button should accept 3rd option");
+        Assert.assertTrue(isSuccessfulSubmitFieldDisplayed(), "Form submission should be successful");
         logStep("Form submission was successful");
     }
 
     @Test
-    public void testClearFormButton() {
+    public void testRadioButtonOption4() {
+        setRequiredFields("Name", "example@email.com", "address");
 
+        selectRadioButtonByIndex(3);
+        clickSubmitButton();
+        Assert.assertTrue(radioDisplaysError(),
+                "Radio button should only accept 3rd option");
+        logStep("Radio field showed an error");
+    }
+
+    @Test
+    public void testRadioButtonOption5() {
+        setRequiredFields("Name", "example@email.com", "address");
+
+        selectRadioButtonByIndex(4);
+        clickSubmitButton();
+        Assert.assertTrue(radioDisplaysError(),
+                "Radio button should only accept 3rd option");
+        logStep("Radio field showed an error");
+    }
+
+    @Test
+    public void testRadioButtonOption6() {
+        setRequiredFields("Name", "example@email.com", "address");
+
+        selectRadioButtonByIndex(5);
+        clickSubmitButton();
+        Assert.assertTrue(radioDisplaysError(),
+                "Radio button with input should show an error if no text provided");
+
+        radioInputFieldEnterText("radio text");
+        clickSubmitButton();
+        Assert.assertTrue(radioDisplaysError(),
+                "Radio button should only accept 3rd option");
+        logStep("Radio field showed an error");
+    }
+
+    @Test
+    public void testClearFormButton() {
+        setRequiredFields("Name", "example@email.com", "address");
+        selectRadioButtonByIndex(5);
+        radioInputFieldEnterText("radio text");
+        enterPhoneNumber("123456789");
+        enterComments("sample text");
+        clickClearFormButton();
+        clickConfirmClearFormButton();
+
+        Assert.assertNull(getSelectedRadioButton(), "Radio button shouldn't be selected");
+        Assert.assertFalse(radioInputFieldHasValue(), "Radio input field should be empty");
+        Assert.assertFalse(nameFieldHasValue(), "Name field should be empty");
+        Assert.assertFalse(emailFieldHasValue(), "Email field should be empty");
+        Assert.assertFalse(addressFieldHasValue(), "Address field should be empty");
+        Assert.assertFalse(phoneNumberFieldHasValue(), "Phone number field should be empty");
+        Assert.assertFalse(commentsFieldHasValue(), "Comments field should be empty");
+        logStep("All fields are cleared");
+    }
+
+    @Test
+    public void testEditAnswersButton() {
+        setRequiredFields("Name", "example@email.com", "address");
+        selectRadioButtonByIndex(5);
+        radioInputFieldEnterText("radio text");
+        enterPhoneNumber("123456789");
+        enterComments("sample text");
+        clickSubmitButton();
+        clickEditAnswersButton();
+
+        Assert.assertEquals(getNameFieldValue(), "Name");
+        Assert.assertEquals(getEmailFieldValue(), "example@email.com");
+        Assert.assertEquals(getAddressFieldValue(), "address");
+        Assert.assertEquals(getPhoneNumberFieldValue(), "123456789");
+        Assert.assertEquals(getCommentsFieldValue(), "sample text");
+        Assert.assertNotNull(getSelectedRadioButton());
+        Assert.assertEquals(getRadioInputFieldValue(), "radio text");
+        logStep("Filled fields are saved upon edit");
     }
 
     @Test
     public void testClearSelectionButton() {
-
+        setRequiredFields("Name", "example@email.com", "address");
+        logStep("Check if radio clear button is hidden");
+        Assert.assertFalse(isClearRadioButtonDisplayed(), "Radio clear button should be hidden");
+        selectRadioButtonByIndex(5);
+        radioInputFieldEnterText("radio text");
+        logStep("Check if radio clear button is visible");
+        Assert.assertTrue(isClearRadioButtonDisplayed(), "Radio clear button should be visible");
+        clickClearRadioButton();
+        Assert.assertNull(getSelectedRadioButton(), "Radio button shouldn't be selected");
+        Assert.assertFalse(radioInputFieldHasValue(), "Radio input field should be empty");
+        Assert.assertFalse(isClearRadioButtonDisplayed(), "Radio button should be hidden");
     }
 
 }

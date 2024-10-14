@@ -15,9 +15,8 @@ public class GoogleFormTestListener implements ITestListener, IInvokedMethodList
         public void onTestFailure(ITestResult result) {
             Throwable throwable = result.getThrowable();
             if (throwable != null) {
-                String customMessage = extractCustomMessage(throwable.getMessage());
-                result.setThrowable(new AssertionError(customMessage));
-                Reporter.log("Test Failed: " + customMessage, true);
+                Reporter.log("Test Failed: " + throwable.getMessage(), true);
+                Reporter.getCurrentTestResult().setThrowable(new AssertionError(throwable.getMessage()));
             }
             logTestSteps(result);
         }
@@ -33,22 +32,13 @@ public class GoogleFormTestListener implements ITestListener, IInvokedMethodList
         public void afterInvocation(IInvokedMethod method, ITestResult testResult) {
         }
 
-        private String extractCustomMessage(String fullMessage) {
-            String[] parts = fullMessage.split("\n");
-            if (parts.length > 0) {
-                String customPart = parts[0].trim();
-                return customPart.replaceFirst("^java\\.lang\\.AssertionError:\\s*", "");
-            }
-            return fullMessage;
-        }
-
         private void logTestSteps(ITestResult result) {
             Reporter.log("Test Steps:", true);
             Object instance = result.getInstance();
-            if (instance instanceof TestStepLogger) {
-                for (String step : ((TestStepLogger) instance).getTestSteps()) {
-                    Reporter.log("- " + step, true);
-                }
+            if (!(instance instanceof TestStepLogger))
+                return;
+            for (String step : ((TestStepLogger) instance).getTestSteps()) {
+                Reporter.log("- " + step, true);
             }
         }
 
